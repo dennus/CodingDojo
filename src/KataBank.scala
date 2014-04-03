@@ -6,38 +6,32 @@ object KataBank {
     val lines = readLinesFromFile("./src/KataBank.testcases")
 
     toFlattenedDigitRows(lines)
-    .foreach(x => println(x))
-
-    //println(new File(".").getAbsolutePath())
+      .foreach(x => println(x))
 
     //println(tryParseNumber(Array(' ', ' ', ' ', '|', '_', '|', ' ', ' ', '2')))
   }
 
-  def toAccountNumberDigits(lines: Array[String]) {
-    var digits = List()
+  def toAccountNumberDigits(rows: Array[Array[Char]]) {
 
 
-    for (row <- 0 to lines.length by 3) {
-      val line = lines(row)
-      var digit = Array()
+    def toDigits(input: Array[Char]) = {
+      val length = 27
+      for (i <- 0 until length by 3)
+        yield new Digit(input.take(3) ++ input.drop(length).take(3) ++ input.drop(length * 2).take(3))
 
-      for(col <- 0 to line.length by 3) {
+        // _  _  _  _  _  _  _  _  _
+        //| || || || || || || || || |
+        //|_||_||_||_||_||_||_||_||_|
 
-      }
-
-     // _  _  _  _  _  _  _  _  _
-     //| || || || || || || || || |
-     //|_||_||_||_||_||_||_||_||_|
-
-      // _  _  _  _  _  _  _  _  _| || || || || || || || || ||_||_||_||_||_||_||_||_||_|
-
+        // _  _  _  _  _  _  _  _  _| || || || || || || || || ||_||_||_||_||_||_||_||_||_|
     }
+
+    rows.map(toDigits)
   }
 
   def toFlattenedDigitRows(lines: Array[String]) : Array[Array[Char]] = {
-
-    (for (row <- 0 to lines.length by 3)
-                  yield (lines(row).toString.concat(lines(row + 1)).concat(lines(row + 2))).toCharArray).toArray
+    (for (row <- 0 until lines.length by 3)
+      yield (lines(row).toString.concat(lines(row + 1)).concat(lines(row + 2))).toCharArray).toArray
   }
 
   def tryParseNumber(numValues : Array[Char]) : String = {
@@ -64,5 +58,13 @@ object KataBank {
 
   def readLinesFromFile(filename: String) : Array[String] = {
     fromFile(filename).getLines.toArray
+  }
+
+  class Digit(input: Array[Char]) {
+    var chars: Array[Char] = input
+
+    override def toString() : String = {
+      chars.mkString
+    }
   }
 }
