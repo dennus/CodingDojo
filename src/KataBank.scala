@@ -1,40 +1,64 @@
 import scala.io.Source._
+import Functional._
 
 object KataBank {
   def main(args: Array[String]) {
 
-    val lines = readLinesFromFile("./src/KataBank.testcases")
+    val accounts = readLinesFromFile("./src/KataBank.testcases") |>
+                      toAccountNumbers
 
-    toFlattenedDigitRows(lines)
-      .foreach(x => println(x))
-
-    //println(tryParseNumber(Array(' ', ' ', ' ', '|', '_', '|', ' ', ' ', '2')))
+    accounts.foreach(x => println(x))
   }
 
-  def toAccountNumberDigits(rows: Array[Array[Char]]) {
+  def toAccountNumberDigits(rows: Array[Array[Char]]) : Array[Account] = {
+    def toDigits(input: Array[Char]) : Array[Digit] = {
+      val accountLength = 27
 
+      val converted = for (i <- 0 until accountLength by 3)
+                        yield {
+                          val s1 = input.take(3)
+                          val s2 = input.drop(accountLength).take(3)
+                          val s3 = input.drop(accountLength * 2).take(3)
 
-    def toDigits(input: Array[Char]) = {
-      val length = 27
-      for (i <- 0 until length by 3)
-        yield new Digit(input.take(3) ++ input.drop(length).take(3) ++ input.drop(length * 2).take(3))
+                          val cmb = s1 ++ s2 ++ s3
 
-        // _  _  _  _  _  _  _  _  _
-        //| || || || || || || || || |
-        //|_||_||_||_||_||_||_||_||_|
+                          tryParseNumber(cmb)
+                        }
 
-        // _  _  _  _  _  _  _  _  _| || || || || || || || || ||_||_||_||_||_||_||_||_||_|
+      converted.toArray
     }
 
-    rows.map(toDigits)
+    rows
+      .map(toDigits)
+      .map(x => {
+        new Account(x)
+      })
   }
 
   def toFlattenedDigitRows(lines: Array[String]) : Array[Array[Char]] = {
-    (for (row <- 0 until lines.length by 3)
-      yield (lines(row).toString.concat(lines(row + 1)).concat(lines(row + 2))).toCharArray).toArray
+    val result = for (row <- 0 until lines.length by 4)
+                    yield {
+                      val r1 = lines(row).toString
+                      val r2 = lines(row + 1).toString
+                      val r3 = lines(row + 2).toString
+
+                      val c1 = r1.concat(r2)
+                      val c2 = c1.concat(r3)
+
+                      c2.toCharArray
+                    }
+
+    result.toArray
   }
 
-  def tryParseNumber(numValues : Array[Char]) : String = {
+  def toAccountNumbers(lines: Array[String]) : Array[Account] = {
+    val accounts = toFlattenedDigitRows(lines) |>
+                      toAccountNumberDigits
+
+    accounts.toArray
+  }
+
+  def tryParseNumber(numValues : Array[Char]) : Digit = {
     val digits = Map(0 -> Array(' ', '_', ' ','|', ' ', '|','|', '_', '|'),
                      1 -> Array(' ', ' ', ' ', ' ', ' ', '|', ' ', ' ', '|'),
                      2 -> Array(' ', '_', ' ', ' ', '_', '|', '|', '_', ' '),
@@ -51,8 +75,8 @@ object KataBank {
     })
 
     digit match {
-      case Some(s) => (s._1).toString
-      case None => "?"
+      case Some(s) => new ValidDigit(s._1)
+      case None => new InvalidDigit()
     }
   }
 
@@ -60,11 +84,41 @@ object KataBank {
     fromFile(filename).getLines.toArray
   }
 
-  class Digit(input: Array[Char]) {
-    var chars: Array[Char] = input
 
-    override def toString() : String = {
-      chars.mkString
+}
+
+class Account(digitsInput: Array[Digit]) {
+  var digits: Array[Digit] = digitsInput
+
+  override def toString() : String = {
+    var result = ""
+
+    for(i <- 0 until digits.length) {
+      result += digits(i).displayValue
     }
+
+    result
+  }
+}
+
+trait Digit {
+  def displayValue() : String
+}
+
+class ValidDigit(inputNumber: Int) extends Digit {
+  var number: Int = inputNumber
+
+  def displayValue() : String = {
+    number.toString
+  }
+
+  override def toString() : String = {
+    number.toString
+  }
+}
+
+class InvalidDigit extends Digit {
+  def displayValue() : String = {
+    "?"
   }
 }
